@@ -27,19 +27,22 @@ void NetworkManager::begin() {
     }
 
     String fv = WiFi.firmwareVersion();
-    Serial.print(F("[Rede] Versao do Firmware Wi-Fi do UNO R4: "));
+    Serial.print(F("[Rede] Versao do Firmware Wi-Fi: "));
     Serial.println(fv);
 
-    Serial.print(F("[Rede] Conectando a rede Wi-Fi: '"));
+    Serial.print(F("[Rede] Tentando conectar a rede: '"));
     Serial.print(WIFI_SSID);
-    Serial.println(F("'"));
-    Serial.println(F("[Rede] ATENCAO: Certifique-se de que o Hotspot esta em 2.4 GHz!"));
+    Serial.println(F("'..."));
 
-    // 2. Tentativa inicial controlada no boot (até ~10 segundos)
+    // Limpa estado anterior antes de iniciar
+    WiFi.disconnect();
+    delay(200);
+
+    // 2. Tentativa de conexão
     attemptConnection();
 
     unsigned long startWait = millis();
-    while (WiFi.status() != WL_CONNECTED && (millis() - startWait < 10000)) {
+    while (WiFi.status() != WL_CONNECTED && (millis() - startWait < 8000)) {
         delay(500);
         Serial.print(F("."));
     }
@@ -52,22 +55,52 @@ void NetworkManager::begin() {
         Serial.print(F("[Rede] Potencia do Sinal (RSSI): "));
         Serial.print(WiFi.RSSI());
         Serial.println(F(" dBm"));
-        Serial.print(F("[Rede] Servidor FastAPI configurado: http://"));
-        Serial.print(SERVER_HOST);
-        Serial.print(F(":"));
-        Serial.print(SERVER_PORT);
-        Serial.println(SERVER_PATH);
     } else {
-        Serial.print(F("[Rede] AVISO: Nao foi possivel conectar imediatamente no boot. Status: "));
+        Serial.print(F("[Rede] Status apos tentativa: "));
         Serial.println(getStatusDescription(WiFi.status()));
+        
+        // 3. Scanner Diagnóstico: lista as redes 2.4 GHz visíveis pelo Arduino
+        Serial.println(F("[Rede] Executando varredura diagnostica de redes 2.4 GHz visiveis..."));
+        int numRedes = WiFi.scanNetworks();
+        if (numRedes <= 0) {
+            Serial.println(F("[Rede] Nenhuma rede Wi-Fi 2.4 GHz encontrada ao alcance."));
+        } else {
+            Serial.print(F("[Rede] Redes detectadas ("));
+            Serial.print(numRedes);
+            Serial.println(F("):"));
+            bool encontrada = false;
+            for (int i = 0; i < numRedes; i++) {
+                Serial.print(F("   ["));
+                Serial.print(i + 1);
+                Serial.print(F("] SSID: '"));
+                Serial.print(WiFi.SSID(i));
+                Serial.print(F("' | RSSI: "));
+                Serial.print(WiFi.RSSI(i));
+                Serial.println(F(" dBm"));
+
+                if (String(WiFi.SSID(i)).equalsIgnoreCase(WIFI_SSID)) {
+                    encontrada = true;
+                }
+            }
+
+            if (encontrada) {
+                Serial.println(F("[Rede] >>> A rede 'HOTSPOT' FOI ENCONTRADA no ar!"));
+                Serial.println(F("[Rede] >>> Se nao conecta, confira: 1) Senha ('SESI@2026'), 2) Tipo de seguranca (WPA2)."));
+            } else {
+                Serial.println(F("[Rede] >>> ALERTA: A rede 'HOTSPOT' NAO ESTA NA LISTA 2.4 GHz!"));
+                Serial.println(F("[Rede] >>> O Hotspot deve estar transmitindo em 5 GHz (invisivel para o Arduino)."));
+                Serial.println(F("[Rede] >>> Altere a Banda do Hotspot no Windows para '2.4 GHz'."));
+            }
+        }
         Serial.println(F("[Rede] O sistema operara em modo offline utilizando o Buffer Circular."));
-        Serial.println(F("[Rede] Novas tentativas de reconexao ocorrerão em segundo plano."));
     }
     Serial.println(F("==================================================\n"));
 }
 
 void NetworkManager::attemptConnection() {
     _isConnecting = true;
+    WiFi.disconnect();
+    delay(100);
     WiFi.begin(WIFI_SSID, WIFI_PASS);
 }
 
@@ -170,7 +203,7 @@ bool NetworkManager::sendHttpPost(const TelemetryRecord& record) {
             if (statusLine.indexOf("200") > 0 || statusLine.indexOf("201") > 0 || statusLine.indexOf("202") > 0) {
                 success = true;
             } else {
-                success = true; // Servidor respondeu
+                success = true;
             }
         } else {
             success = true;
