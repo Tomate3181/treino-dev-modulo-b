@@ -17,7 +17,7 @@
 
 | 📊 Dashboard Web em Tempo Real | 💻 Logs do Servidor e Monitor Serial |
 | :---: | :---: |
-| ![Dashboard Web](placeholder_dashboard_web.png) | ![Logs e Telemetria](placeholder_logs_telemetria.png) |
+| ![Dashboard Web](./imagens/dashboard-web.png) | ![Logs e Telemetria](./imagens/logs-servidor.png) |
 | *Interface gráfica moderna com gráficos temporais (Chart.js) e métricas.* | *Terminal exibindo os pacotes JSON recebidos e salvos no SQLite.* |
 
 ---
