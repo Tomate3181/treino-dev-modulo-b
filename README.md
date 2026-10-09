@@ -12,7 +12,7 @@
 
 | 🌿 Montagem do Circuito e Sensores | 💡 Matriz de LED Nativa (UNO R4) |
 | :---: | :---: |
-| ![Circuito Físico do Protótipo](placeholder_circuito_hardware.png) | ![Matriz de LED em Operação](placeholder_matriz_led.png) |
+| ![Circuito Físico do Protótipo](./Imagens/prototipo-fisico.png) | ![Matriz de LED em Operação](./Imagens/display-arduino.png) |
 | *Foto da protoboard com DHT11, LDR, Reed Switch, Relé, LEDs e Buzzer.* | *Exibição da letra do estado atual ('N', 'A', 'C', 'R', 'F') na matriz 12x8.* |
 
 | 📊 Dashboard Web em Tempo Real | 💻 Logs do Servidor e Monitor Serial |

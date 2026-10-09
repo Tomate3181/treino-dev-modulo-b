@@ -26,18 +26,25 @@ public:
     // Retorna a quantidade de itens aguardando envio na fila offline
     int getPendingCount() const;
 
+    // Retorna texto descritivo do status da biblioteca WiFiS3
+    static const char* getStatusDescription(uint8_t status);
+
 private:
     WiFiClient _client;
     NetworkBuffer _offlineBuffer;
     
     unsigned long _lastReconnectAttempt;
-    static const unsigned long RECONNECT_INTERVAL_MS = 10000; // Tenta reconectar a cada 10s se offline
+    bool _isConnecting;
+    static const unsigned long RECONNECT_INTERVAL_MS = 20000; // Intervalo de 20s para permitir DHCP estável
 
     // Envia um único registro via HTTP POST para a API FastAPI
     bool sendHttpPost(const TelemetryRecord& record);
     
     // Constrói a string do payload JSON conforme RF-07
     void buildJsonPayload(const TelemetryRecord& record, char* buffer, size_t bufferSize);
+
+    // Tenta conectar ao Wi-Fi e exibe diagnósticos
+    void attemptConnection();
 };
 
 #endif // NETWORK_MANAGER_H
