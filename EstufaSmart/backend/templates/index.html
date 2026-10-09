@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EstufaSmart - Dashboard de Monitoramento IoT</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Chart.js via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #121826;
+            --bg-card: rgba(22, 30, 46, 0.75);
+            --border-card: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --color-green: #10b981;
+            --color-yellow: #f59e0b;
+            --color-red: #ef4444;
+            --color-purple: #8b5cf6;
+            --color-blue: #3b82f6;
+            --color-cyan: #06b6d4;
+            --shadow-glow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 24px;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 24px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-card);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-card);
+            backdrop-filter: blur(8px);
+            padding: 8px 16px;
+            border-radius: 9999px;
+            border: 1px solid var(--border-card);
+            font-size: 0.85rem;
+        }
+
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--color-green);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--color-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        /* Metric Cards Grid */
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: var(--shadow-glow);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-icon {
+            font-size: 1.3rem;
+            opacity: 0.8;
+        }
+
+        .card-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.03em;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .card-unit {
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .card-footer {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .status-NORMAL {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+        }
+
+        .status-ATENÇÃO, .status-ATENCAO {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+        }
+
+        .status-CRÍTICO, .status-CRITICO {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.3);
+            animation: pulse-danger 1.5s infinite;
+        }
+
+        .status-RECONHECIDO {
+            background: rgba(139, 92, 246, 0.18);
+            color: #a78bfa;
+            border: 1px solid rgba(139, 92, 246, 0.4);
+        }
+
+        .status-FALHA_SENSOR {
+            background: rgba(236, 72, 153, 0.2);
+            color: #f43f5e;
+            border: 1px solid rgba(236, 72, 153, 0.4);
+        }
+
+        @keyframes pulse-danger {
+            0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
+            50% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.6); }
+            100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
+        }
+
+        /* Window Status */
+        .window-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .window-closed {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--color-green);
+        }
+
+        .window-open {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--color-red);
+        }
+
+        /* Chart Section */
+        .chart-container {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-glow);
+            margin-bottom: 24px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 16px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            height: 360px;
+            width: 100%;
+        }
+
+        /* Footer */
+        footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-card);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .device-info {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-title">
+                <div class="logo-icon">🌱</div>
+                <div>
+                    <h1>EstufaSmart IoT</h1>
+                    <div class="subtitle">Monitoramento em Tempo Real • Arduino UNO R4 WiFi</div>
+                </div>
+            </div>
+            <div class="connection-status">
+                <div class="pulse-dot" id="pulseDot"></div>
+                <span id="connectionText">Sincronizando com o servidor...</span>
+                <span id="lastUpdated" style="color: var(--text-muted); font-size: 0.75rem;"></span>
+            </div>
+        </header>
+
+        <!-- Metric Cards -->
+        <div class="grid-cards">
+            <!-- Temperatura -->
+            <div class="card" style="border-top: 3px solid var(--color-cyan);">
+                <div class="card-header">
+                    <span class="card-label">Temperatura</span>
+                    <span class="card-icon">🌡️</span>
+                </div>
+                <div class="card-value">
+                    <span id="valTemp">--.-</span>
+                    <span class="card-unit">°C</span>
+                </div>
+                <div class="card-footer">
+                    <span>Faixa Ideal: <strong>20.0°C - 28.0°C</strong></span>
+                </div>
+            </div>
+
+            <!-- Umidade -->
+            <div class="card" style="border-top: 3px solid var(--color-blue);">
+                <div class="card-header">
+                    <span class="card-label">Umidade do Ar</span>
+                    <span class="card-icon">💧</span>
+                </div>
+                <div class="card-value">
+                    <span id="valUmid">--.-</span>
+                    <span class="card-unit">%</span>
+                </div>
+                <div class="card-footer">
+                    <span>Sensor DHT11</span>
+                </div>
+            </div>
+
+            <!-- Luminosidade -->
+            <div class="card" style="border-top: 3px solid var(--color-yellow);">
+                <div class="card-header">
+                    <span class="card-label">Luminosidade (LDR)</span>
+                    <span class="card-icon">☀️</span>
+                </div>
+                <div class="card-value">
+                    <span id="valLuz">--</span>
+                    <span class="card-unit">%</span>
+                </div>
+                <div class="card-footer">
+                    <span>Escala Normalizada A0</span>
+                </div>
+            </div>
+
+            <!-- Estado do Sistema -->
+            <div class="card" style="border-top: 3px solid var(--color-green);">
+                <div class="card-header">
+                    <span class="card-label">Estado Operacional</span>
+                    <span class="card-icon">⚙️</span>
+                </div>
+                <div style="margin-top: 8px;">
+                    <div id="badgeEstado" class="status-badge status-NORMAL">NORMAL</div>
+                </div>
+                <div class="card-footer">
+                    <span id="valJanelaWrapper">
+                        Janela: <span id="valJanela" class="window-badge window-closed">FECHADA</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <div>
+                    <h2 class="chart-title">Evolução Temporal dos Parâmetros</h2>
+                    <div class="subtitle">Histórico recente de leituras cronológicas</div>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background-color: #06b6d4;"></div>
+                        <span>Temperatura (°C)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background-color: #3b82f6;"></div>
+                        <span>Umidade (%)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="canvas-wrapper">
+                <canvas id="telemetryChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <div class="device-info">
+                Dispositivo: <span id="valDeviceId" style="color: var(--text-primary);">--</span> | 
+                Placa: <span id="valPlaca" style="color: var(--text-primary);">--</span> | 
+                Seq: #<span id="valSeq" style="color: var(--text-primary);">0</span>
+            </div>
+            <div>
+                FastAPI + SQLite • EstufaSmart v1.0
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Configuração do Gráfico Chart.js
+        const ctx = document.getElementById('telemetryChart').getContext('2d');
+        const telemetryChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Temperatura (°C)',
+                        data: [],
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.12)',
+                        borderWidth: 2.5,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#06b6d4',
+                        tension: 0.35,
+                        fill: true,
+                        yAxisID: 'yTemp'
+                    },
+                    {
+                        label: 'Umidade (%)',
+                        data: [],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                        borderWidth: 2.5,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#3b82f6',
+                        tension: 0.35,
+                        fill: true,
+                        yAxisID: 'yUmid'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 400
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            color: '#64748b',
+                            maxRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 10
+                        }
+                    },
+                    yTemp: {
+                        type: 'linear',
+                        position: 'left',
+                        suggestedMin: 15,
+                        suggestedMax: 35,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            color: '#06b6d4',
+                            callback: value => value + '°C'
+                        }
+                    },
+                    yUmid: {
+                        type: 'linear',
+                        position: 'right',
+                        suggestedMin: 30,
+                        suggestedMax: 90,
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        ticks: {
+                            color: '#3b82f6',
+                            callback: value => value + '%'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#121826',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#94a3b8',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        padding: 12
+                    }
+                }
+            }
+        });
+
+        // Função de Atualização da Interface
+        function updateDashboard(latest) {
+            if (!latest) return;
+
+            document.getElementById('valTemp').innerText = Number(latest.temp).toFixed(1);
+            document.getElementById('valUmid').innerText = Number(latest.umid).toFixed(1);
+            document.getElementById('valLuz').innerText = latest.luz_pct;
+            document.getElementById('valDeviceId').innerText = latest.device_id;
+            document.getElementById('valPlaca').innerText = latest.placa;
+            document.getElementById('valSeq').innerText = latest.seq;
+
+            // Janela
+            const elJanela = document.getElementById('valJanela');
+            if (latest.janela) {
+                elJanela.innerText = 'ABERTA ⚠️';
+                elJanela.className = 'window-badge window-open';
+            } else {
+                elJanela.innerText = 'FECHADA ✅';
+                elJanela.className = 'window-badge window-closed';
+            }
+
+            // Estado Badge
+            const elBadge = document.getElementById('badgeEstado');
+            elBadge.innerText = latest.estado;
+            elBadge.className = 'status-badge status-' + latest.estado.replace(/[^a-zA-Z0-9_]/g, '');
+
+            // Timestamp
+            const d = new Date(latest.created_at || Date.now());
+            document.getElementById('lastUpdated').innerText = d.toLocaleTimeString('pt-BR');
+            document.getElementById('connectionText').innerText = 'Conectado • ' + latest.device_id;
+            document.getElementById('pulseDot').style.backgroundColor = 'var(--color-green)';
+        }
+
+        // Função de Polling dos Dados (RF-05: a cada 3-5 segundos)
+        async function fetchTelemetry() {
+            try {
+                // 1. Busca último registro
+                const resLatest = await fetch('/api/telemetry/latest');
+                if (resLatest.ok) {
+                    const latest = await resLatest.json();
+                    updateDashboard(latest);
+                }
+
+                // 2. Busca histórico das últimas 50 leituras para o gráfico
+                const resHistory = await fetch('/api/telemetry/history?limit=50');
+                if (resHistory.ok) {
+                    const history = await resHistory.json();
+                    if (Array.isArray(history) && history.length > 0) {
+                        const labels = history.map(item => {
+                            const date = new Date(item.created_at);
+                            return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                        });
+                        const temps = history.map(item => item.temp);
+                        const umids = history.map(item => item.umid);
+
+                        telemetryChart.data.labels = labels;
+                        telemetryChart.data.datasets[0].data = temps;
+                        telemetryChart.data.datasets[1].data = umids;
+                        telemetryChart.update('none'); // Update sem travamento
+                    }
+                }
+            } catch (err) {
+                console.warn('Erro ao atualizar telemetria:', err);
+                document.getElementById('connectionText').innerText = 'Aguardando telemetria...';
+                document.getElementById('pulseDot').style.backgroundColor = 'var(--color-yellow)';
+            }
+        }
+
+        // Inicia polling inicial e periódico a cada 3.5 segundos
+        fetchTelemetry();
+        setInterval(fetchTelemetry, 3500);
+    </script>
+</body>
+</html>
