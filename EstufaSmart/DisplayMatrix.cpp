@@ -80,27 +80,27 @@ void DisplayMatrix::displayState(char stateChar) {
 
     switch (stateChar) {
         case 'N':
-            _matrix.renderBitmap((uint8_t*)FRAME_N, 8, 12);
+            _matrix.loadPixels((uint8_t*)FRAME_N, 8 * 12);
             break;
         case 'A':
-            _matrix.renderBitmap((uint8_t*)FRAME_A, 8, 12);
+            _matrix.loadPixels((uint8_t*)FRAME_A, 8 * 12);
             break;
         case 'C':
-            _matrix.renderBitmap((uint8_t*)FRAME_C, 8, 12);
+            _matrix.loadPixels((uint8_t*)FRAME_C, 8 * 12);
             break;
         case 'R':
-            _matrix.renderBitmap((uint8_t*)FRAME_R, 8, 12);
+            _matrix.loadPixels((uint8_t*)FRAME_R, 8 * 12);
             break;
         case 'F':
-            _matrix.renderBitmap((uint8_t*)FRAME_F, 8, 12);
+            _matrix.loadPixels((uint8_t*)FRAME_F, 8 * 12);
             break;
         default:
-            _matrix.renderBitmap((uint8_t*)FRAME_BLANK, 8, 12);
+            _matrix.loadPixels((uint8_t*)FRAME_BLANK, 8 * 12);
             break;
     }
 }
 
 void DisplayMatrix::clear() {
     _currentChar = '\0';
-    _matrix.renderBitmap((uint8_t*)FRAME_BLANK, 8, 12);
+    _matrix.loadPixels((uint8_t*)FRAME_BLANK, 8 * 12);
 }
